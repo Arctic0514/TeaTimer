@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link rel="manifest" href="manifest.json">
+    <title>茶道計時助手</title>
+    <style>
+        :root {
+            --primary-color: #6b8e23; /* 抹茶綠 */
+            --primary-dark: #55711b;
+            --bg-color: #faf8f5;
+            --bottom-bg: #eeeeee;
+            --save-btn-bg: #d4edda;
+        }
+        body {
+            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        /* 頂部標題 */
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 15px 0 5px 0;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        /* 分頁標籤列 */
+        .tabs-wrapper {
+            display: flex;
+            align-items: center;
+            overflow-x: auto;
+            background-color: var(--primary-color);
+            padding: 0 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            scrollbar-width: none; 
+            -ms-overflow-style: none;
+        }
+        .tabs-wrapper::-webkit-scrollbar {
+            display: none;
+        }
+        .tab {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 16px;
+            font-weight: bold;
+            border-bottom: 3px solid transparent;
+            transition: 0.2s;
+        }
+        .tab.active {
+            color: white;
+            border-bottom: 3px solid white;
+        }
+        /* 分頁上的操作按鈕 (改名/刪除) */
+        .tab-action {
+            margin-left: 8px;
+            font-size: 14px;
+            opacity: 0.8;
+            padding: 2px;
+        }
+        .tab-action:active {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+        .tab-add {
+            padding: 10px 15px;
+            color: #d4edda;
+            cursor: pointer;
+            white-space: nowrap;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* 滾動清單區 */
+        #scrollable-frame {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px 15px 100px 15px;
+        }
+        /* 每一列的樣式 */
+        .row-frame {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .start-btn {
+            font-size: 18px;
+            padding: 8px 15px;
+            width: 80px;
+            border: none;
+            border-radius: 8px;
+            background-color: #e0e0e0;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .start-btn.running { background-color: #ffebee; color: red; }
+        .start-btn.done { background-color: #e8f5e9; color: green; }
+        
+        .row-label { font-size: 20px; font-weight: bold; flex: 1; margin-left: 15px; }
+        .row-label.done { color: #B8860B; }
+        
+        .sec-input {
+            font-size: 22px;
+            width: 50px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 5px;
+            font-weight: bold;
+        }
+        .sec-text { font-size: 18px; font-weight: bold; margin-left: 8px; }
+
+        /* 刪除按鈕樣式 */
+        .delete-btn {
+            color: #ff4444;
+            background: none;
+            border: 1px solid #ff4444;
+            border-radius: 6px;
+            padding: 4px 10px;
+            margin-left: 10px;
+            font-size: 14px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .delete-btn:active { background-color: #ffebee; }
+
+        /* 底部固定按鈕區 */
+        .bottom-fixed-frame {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: var(--bottom-bg);
+            border-top: 1px solid #ddd;
+            padding: 15px 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+        .action-btn {
+            font-size: 18px;
+            font-weight: bold;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: pointer;
+        }
+        .btn-save { background-color: var(--save-btn-bg); }
+        
+        @media (min-width: 600px) {
+            body { max-width: 500px; margin: 0 auto; border-left: 1px solid #ddd; border-right: 1px solid #ddd; }
+            .bottom-fixed-frame { max-width: 500px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">茶道計時助手</div>
+    <div class="tabs-wrapper" id="tabs-wrapper"></div>
+
+    <div id="scrollable-frame">
+        <!-- 倒數列會由 JS 動態產生在這裡 -->
+    </div>
+
+    <div class="bottom-fixed-frame">
+        <button class="action-btn" onclick="addRow()">新增</button>
+        <button class="action-btn" onclick="resetAll()">重置</button>
+        <button class="action-btn btn-save" onclick="saveConfig()">儲存</button>
+    </div>
+
+    <script>
+        const scrollableFrame = document.getElementById('scrollable-frame');
+        const tabsWrapper = document.getElementById('tabs-wrapper');
+        let rowsData = [];
+        
+        let allTeaConfigs = {};
+        let currentTea = "";
+
+        // 初始化
+        window.onload = function() {
+            loadConfig();
+            renderTabs();
+            loadTeaUi(currentTea);
+        };
+
+        // --- 分頁系統與茶種管理邏輯 ---
+        function renderTabs() {
+            tabsWrapper.innerHTML = '';
+            for (let teaName in allTeaConfigs) {
+                let tab = document.createElement('div');
+                tab.className = 'tab' + (teaName === currentTea ? ' active' : '');
+                
+                // 1. 放入茶葉名稱
+                let nameText = document.createElement('span');
+                nameText.innerText = teaName;
+                tab.appendChild(nameText);
+                
+                // 2. 如果是當前選中的茶葉，顯示改名與刪除按鈕
+                if (teaName === currentTea) {
+                    let editBtn = document.createElement('span');
+                    editBtn.className = 'tab-action';
+                    editBtn.innerHTML = '✏️';
+                    editBtn.onclick = (e) => {
+                        e.stopPropagation(); // 阻止觸發切換分頁
+                        renameTea(teaName);
+                    };
+                    
+                    let delBtn = document.createElement('span');
+                    delBtn.className = 'tab-action';
+                    delBtn.innerHTML = '❌';
+                    delBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        deleteCurrentTea(teaName);
+                    };
+
+                    tab.appendChild(editBtn);
+                    tab.appendChild(delBtn);
+                }
+
+                // 單擊切換分頁
+                tab.onclick = () => switchTab(teaName);
+                tabsWrapper.appendChild(tab);
+            }
+
+            // 新增茶葉按鈕
+            let addTabBtn = document.createElement('div');
+            addTabBtn.className = 'tab-add';
+            addTabBtn.innerText = '＋ 新增';
+            addTabBtn.onclick = addNewTea;
+            tabsWrapper.appendChild(addTabBtn);
+        }
+
+        // 改名功能
+        function renameTea(oldName) {
+            let newName = prompt(`請輸入「${oldName}」的新名稱：`, oldName);
+            // 檢查輸入是否有效且不重複
+            if (newName && newName.trim() !== "" && newName !== oldName) {
+                if (allTeaConfigs[newName]) {
+                    alert("這個茶葉名稱已經存在囉！");
+                    return;
+                }
+                saveCurrentUiToData();
+                
+                // 重建整個物件以維持原本的分頁排序
+                let newConfigs = {};
+                for (let key in allTeaConfigs) {
+                    if (key === oldName) {
+                        newConfigs[newName] = allTeaConfigs[key];
+                    } else {
+                        newConfigs[key] = allTeaConfigs[key];
+                    }
+                }
+                allTeaConfigs = newConfigs;
+                currentTea = newName;
+                
+                saveToLocalStorage();
+                renderTabs();
+            }
+        }
+
+        // 刪除整組茶種
+        function deleteCurrentTea(teaName) {
+            if (Object.keys(allTeaConfigs).length <= 1) {
+                alert("至少需要保留一種茶葉喔！");
+                return;
+            }
+            if (confirm(`確定要刪除「${teaName}」的所有設定嗎？此動作無法復原。`)) {
+                resetAll(); // 先停止所有正在運作的計時器
+                delete allTeaConfigs[teaName];
+                currentTea = Object.keys(allTeaConfigs)[0];
+                saveToLocalStorage();
+                renderTabs();
+                loadTeaUi(currentTea);
+            }
+        }
+
+        function switchTab(teaName) {
+            if (currentTea === teaName) return;
+            saveCurrentUiToData();
+            resetAll();
+            currentTea = teaName;
+            renderTabs();
+            loadTeaUi(currentTea);
+        }
+
+        function addNewTea() {
+            let newName = prompt("請輸入新茶葉名稱（例如：鐵觀音）：");
+            if (newName && newName.trim() !== "") {
+                if (allTeaConfigs[newName]) {
+                    alert("這個茶葉名稱已經存在囉！");
+                    return;
+                }
+                saveCurrentUiToData();
+                allTeaConfigs[newName] = ["30", "30", "30"]; // 預設三泡
+                currentTea = newName;
+                saveToLocalStorage();
+                renderTabs();
+                loadTeaUi(currentTea);
+                tabsWrapper.scrollLeft = tabsWrapper.scrollWidth;
+            }
+        }
+
+        function loadTeaUi(teaName) {
+            scrollableFrame.innerHTML = '';
+            rowsData = [];
+            let secs = allTeaConfigs[teaName] || ["30", "30", "30"];
+            if (secs.length === 0) secs = ["30"];
+            
+            secs.forEach(sec => addRow(sec));
+        }
+
+        // --- UI 操作與計時邏輯 ---
+        function getChineseNum(n) {
+            const nums = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十", 
+                          "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十"];
+            return n < nums.length ? nums[n] : n.toString();
+        }
+
+        function getRowName(index) {
+            if (index === 0) return "醒茶";
+            return `第${getChineseNum(index)}泡`;
+        }
+
+        function addRow(defaultSec = "30") {
+            const uniqueId = Date.now() + Math.random();
+            const idx = rowsData.length;
+            const labelText = getRowName(idx);
+
+            const rowFrame = document.createElement('div');
+            rowFrame.className = 'row-frame';
+            rowFrame.id = `row-${uniqueId}`;
+
+            const startBtn = document.createElement('button');
+            startBtn.className = 'start-btn';
+            startBtn.innerText = '啟動';
+
+            const label = document.createElement('div');
+            label.className = 'row-label';
+            label.innerText = labelText;
+
+            const inputContainer = document.createElement('div');
+            inputContainer.style.display = "flex";
+            inputContainer.style.alignItems = "center";
+
+            const secInput = document.createElement('input');
+            secInput.type = 'number';
+            secInput.className = 'sec-input';
+            secInput.value = defaultSec;
+            
+            const secText = document.createElement('span');
+            secText.className = 'sec-text';
+            secText.innerText = '秒';
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.innerText = '刪除';
+
+            inputContainer.appendChild(secInput);
+            inputContainer.appendChild(secText);
+            inputContainer.appendChild(deleteBtn);
+
+            rowFrame.appendChild(startBtn);
+            rowFrame.appendChild(label);
+            rowFrame.appendChild(inputContainer);
+            scrollableFrame.appendChild(rowFrame);
+
+            const rowObj = {
+                id: uniqueId, name: labelText, btn: startBtn, 
+                label: label, input: secInput, timerId: null, isRunning: false
+            };
+            
+            startBtn.onclick = () => startCountdown(rowObj);
+            deleteBtn.onclick = () => deleteRow(uniqueId);
+            
+            rowsData.push(rowObj);
+        }
+
+        function deleteRow(id) {
+            const index = rowsData.findIndex(r => r.id === id);
+            if (index !== -1) {
+                if (rowsData[index].timerId) clearInterval(rowsData[index].timerId);
+                const element = document.getElementById(`row-${id}`);
+                if (element) element.remove();
+                rowsData.splice(index, 1);
+                updateAllLabels();
+            }
+        }
+
+        function updateAllLabels() {
+            rowsData.forEach((row, i) => {
+                const newName = getRowName(i);
+                row.name = newName;
+                row.label.innerText = newName;
+            });
+        }
+
+        function startCountdown(row) {
+            if (row.isRunning) return;
+
+            let unlockUtterance = new SpeechSynthesisUtterance("");
+            window.speechSynthesis.speak(unlockUtterance);
+
+            row.isRunning = true;
+            let seconds = parseInt(row.input.value) || 0;
+            
+            row.label.classList.remove('done');
+            row.btn.className = 'start-btn running';
+            row.btn.disabled = true;
+
+            row.timerId = setInterval(() => {
+                row.btn.innerText = seconds;
+                if (seconds <= 0) {
+                    clearInterval(row.timerId);
+                    row.label.classList.add('done');
+                    row.btn.className = 'start-btn done';
+                    row.btn.innerText = '完成';
+                    row.btn.disabled = false;
+                    row.isRunning = false;
+                    speakWorker(`${row.name}時間到`);
+                }
+                seconds--;
+            }, 1000);
+        }
+
+        function speakWorker(text) {
+            if ('speechSynthesis' in window) {
+                let utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-TW';
+                utterance.rate = 1.0;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function resetAll() {
+            rowsData.forEach(row => {
+                if (row.timerId) clearInterval(row.timerId);
+                row.isRunning = false;
+                row.label.classList.remove('done');
+                row.btn.className = 'start-btn';
+                row.btn.innerText = '啟動';
+                row.btn.disabled = false;
+            });
+        }
+
+        // --- 儲存系統 ---
+        function saveCurrentUiToData() {
+            if (currentTea) {
+                allTeaConfigs[currentTea] = rowsData.map(row => row.input.value);
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('teaTimerTabsConfig', JSON.stringify(allTeaConfigs));
+        }
+
+        function saveConfig() {
+            saveCurrentUiToData();
+            saveToLocalStorage();
+            
+            const saveBtn = document.querySelector('.btn-save');
+            const originalText = saveBtn.innerText;
+            saveBtn.innerText = '已儲存！';
+            saveBtn.style.backgroundColor = '#c3e6cb';
+            setTimeout(() => {
+                saveBtn.innerText = originalText;
+                saveBtn.style.backgroundColor = 'var(--save-btn-bg)';
+            }, 1000);
+        }
+
+        function loadConfig() {
+            let saved = localStorage.getItem('teaTimerTabsConfig');
+            if (saved) {
+                try { 
+                    allTeaConfigs = JSON.parse(saved); 
+                    if(Object.keys(allTeaConfigs).length > 0) {
+                        currentTea = Object.keys(allTeaConfigs)[0];
+                        return;
+                    }
+                } 
+                catch(e) {}
+            }
+
+            let oldSaved = localStorage.getItem('teaTimerConfig');
+            if (oldSaved) {
+                try {
+                    let oldArr = JSON.parse(oldSaved);
+                    if (Array.isArray(oldArr)) {
+                        allTeaConfigs = { "高山茶": oldArr }; 
+                        currentTea = "高山茶";
+                        return;
+                    }
+                } catch(e) {}
+            }
+
+            allTeaConfigs = {
+                "高山茶": ["30", "40", "50"],
+                "紅茶": ["15", "20", "30"],
+                "普洱茶": ["10", "15", "20"]
+            };
+            currentTea = "高山茶";
+        }
+    </script>
+</body>
+</html>
