@@ -428,4 +428,197 @@
         function loadTeaUi(teaName) {
             rowsContainer.innerHTML = ''; 
             rowsData = [];
-            let config = allTeaConfigs[teaName] || {
+            let config = allTeaConfigs[teaName] || { steeps: ["30"], tempMin: "", tempMax: "", ratio: "", pot: "" };
+            
+            teaTempMinInput.value = config.tempMin || "";
+            teaTempMaxInput.value = config.tempMax || "";
+            teaRatioInput.value = config.ratio || "";
+            potCapacityInput.value = config.pot || "";
+            
+            config.steeps.forEach(sec => addRow(sec));
+            calculateTea(); 
+        }
+
+        // --- 計時邏輯 ---
+        function getChineseNum(n) {
+            const nums = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十"];
+            return n < nums.length ? nums[n] : n.toString();
+        }
+
+        function getRowName(index) {
+            return index === 0 ? "醒茶" : `第${getChineseNum(index)}泡`;
+        }
+
+        function addRow(defaultSec = "30") {
+            const uniqueId = Date.now() + Math.random();
+            const idx = rowsData.length;
+            const labelText = getRowName(idx);
+
+            const rowFrame = document.createElement('div');
+            rowFrame.className = 'row-frame';
+            rowFrame.id = `row-${uniqueId}`;
+
+            const startBtn = document.createElement('button');
+            startBtn.className = 'start-btn';
+            startBtn.innerText = '啟動';
+
+            const label = document.createElement('div');
+            label.className = 'row-label';
+            label.innerText = labelText;
+
+            const inputContainer = document.createElement('div');
+            inputContainer.style.display = "flex";
+            inputContainer.style.alignItems = "center";
+
+            const secInput = document.createElement('input');
+            secInput.type = 'number';
+            secInput.className = 'sec-input';
+            secInput.value = defaultSec;
+            
+            const secText = document.createElement('span');
+            secText.className = 'sec-text';
+            secText.innerText = '秒';
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.innerText = '刪除';
+
+            inputContainer.appendChild(secInput);
+            inputContainer.appendChild(secText);
+            inputContainer.appendChild(deleteBtn);
+
+            rowFrame.appendChild(startBtn);
+            rowFrame.appendChild(label);
+            rowFrame.appendChild(inputContainer);
+            rowsContainer.appendChild(rowFrame);
+
+            const rowObj = { id: uniqueId, name: labelText, btn: startBtn, label: label, input: secInput, timerId: null, isRunning: false };
+            startBtn.onclick = () => startCountdown(rowObj);
+            deleteBtn.onclick = () => deleteRow(uniqueId);
+            rowsData.push(rowObj);
+        }
+
+        function deleteRow(id) {
+            const index = rowsData.findIndex(r => r.id === id);
+            if (index !== -1) {
+                if (rowsData[index].timerId) clearInterval(rowsData[index].timerId);
+                document.getElementById(`row-${id}`).remove();
+                rowsData.splice(index, 1);
+                updateAllLabels();
+            }
+        }
+
+        function updateAllLabels() {
+            rowsData.forEach((row, i) => {
+                const newName = getRowName(i);
+                row.name = newName;
+                row.label.innerText = newName;
+            });
+        }
+
+        function startCountdown(row) {
+            if (row.isRunning) return;
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
+            row.isRunning = true;
+            let seconds = parseInt(row.input.value) || 0;
+            row.label.classList.remove('done');
+            row.btn.className = 'start-btn running';
+            row.btn.disabled = true;
+
+            row.timerId = setInterval(() => {
+                row.btn.innerText = seconds;
+                if (seconds <= 0) {
+                    clearInterval(row.timerId);
+                    row.label.classList.add('done');
+                    row.btn.className = 'start-btn done';
+                    row.btn.innerText = '完成';
+                    row.btn.disabled = false;
+                    row.isRunning = false;
+                    speakWorker(`${row.name}時間到`);
+                }
+                seconds--;
+            }, 1000);
+        }
+
+        function speakWorker(text) {
+            if ('speechSynthesis' in window) {
+                let utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'zh-TW';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function resetAll() {
+            rowsData.forEach(row => {
+                if (row.timerId) clearInterval(row.timerId);
+                row.isRunning = false;
+                row.label.classList.remove('done');
+                row.btn.className = 'start-btn';
+                row.btn.innerText = '啟動';
+                row.btn.disabled = false;
+            });
+        }
+
+        // --- 儲存系統 ---
+        function saveCurrentUiToData() {
+            if (currentTea) {
+                allTeaConfigs[currentTea] = {
+                    steeps: rowsData.map(row => row.input.value),
+                    tempMin: teaTempMinInput.value,
+                    tempMax: teaTempMaxInput.value,
+                    ratio: teaRatioInput.value,
+                    pot: potCapacityInput.value
+                };
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('teaTimerTabsConfig', JSON.stringify(allTeaConfigs));
+        }
+
+        function saveConfig() {
+            saveCurrentUiToData();
+            saveToLocalStorage();
+            const saveBtn = document.querySelector('.btn-save');
+            const originalText = saveBtn.innerText;
+            saveBtn.innerText = '已儲存！';
+            saveBtn.style.backgroundColor = '#c3e6cb';
+            setTimeout(() => { saveBtn.innerText = originalText; saveBtn.style.backgroundColor = 'var(--save-btn-bg)'; }, 1000);
+        }
+
+        function loadConfig() {
+            let saved = localStorage.getItem('teaTimerTabsConfig');
+            if (saved) {
+                try { 
+                    let parsed = JSON.parse(saved); 
+                    for (let key in parsed) {
+                        if (Array.isArray(parsed[key])) {
+                            parsed[key] = { steeps: parsed[key], tempMin: "", tempMax: "", ratio: "", pot: "" };
+                        } else {
+                            if (parsed[key].temp !== undefined) {
+                                if (parsed[key].temp.includes('~')) {
+                                    let parts = parsed[key].temp.split('~');
+                                    parsed[key].tempMin = parts[0] ? parts[0].trim() : "";
+                                    parsed[key].tempMax = parts[1] ? parts[1].trim() : "";
+                                } else {
+                                    parsed[key].tempMin = parsed[key].temp;
+                                    parsed[key].tempMax = parsed[key].temp;
+                                }
+                                delete parsed[key].temp;
+                            }
+                            if (parsed[key].tempMin === undefined) parsed[key].tempMin = "";
+                            if (parsed[key].tempMax === undefined) parsed[key].tempMax = "";
+                            if (parsed[key].ratio === undefined) parsed[key].ratio = "";
+                            if (parsed[key].pot === undefined) parsed[key].pot = "";
+                        }
+                    }
+                    allTeaConfigs = parsed;
+                    if(Object.keys(allTeaConfigs).length > 0) { currentTea = Object.keys(allTeaConfigs)[0]; return; }
+                } catch(e) {}
+            }
+            allTeaConfigs = { "高山茶": { steeps: ["30", "40", "50"], tempMin: "95", tempMax: "100", ratio: "20", pot: "150" } };
+            currentTea = "高山茶";
+        }
+    </script>
+</body>
+</html>
