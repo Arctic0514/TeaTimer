@@ -24,13 +24,45 @@
             flex-direction: column;
             height: 100vh;
         }
+        
+        /* 頂部標題列 (包含匯出/匯入) */
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .header-title {
+            font-size: 22px;
+            font-weight: bold;
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+        .header-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            font-size: 14px;
+            padding: 5px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .header-btn:active { background: rgba(255,255,255,0.4); }
+
         /* 分頁標籤列 */
         .tabs-wrapper {
             display: flex;
             align-items: center;
             overflow-x: auto;
             background-color: var(--primary-color);
-            padding: 10px 10px 0 10px; 
+            padding: 5px 10px 0 10px; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             scrollbar-width: none; 
             -ms-overflow-style: none;
@@ -108,7 +140,7 @@
         }
         .ratio-row {
             display: flex;
-            flex-wrap: wrap; /* 允許在小螢幕自動換行 */
+            flex-wrap: wrap; 
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
@@ -116,7 +148,6 @@
         }
         .ratio-item { display: flex; align-items: center; font-size: 18px; font-weight: bold; }
         
-        /* 一般大小的輸入框 (比例與容量) */
         .ratio-input-large {
             width: 70px;
             font-size: 18px;
@@ -126,4 +157,275 @@
             padding: 6px;
             margin: 0 5px;
             font-weight: bold;
-            color: var(--accent-
+            color: var(--accent-color);
+        }
+        .ratio-input-small {
+            width: 48px;
+            font-size: 18px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 6px;
+            margin: 0 2px;
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+        
+        .calc-result-box {
+            background-color: #fcf8e3;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--accent-color);
+            border: 1px dashed var(--accent-color);
+        }
+        #calc-tea-result { font-size: 24px; color: #d9534f; margin: 0 5px; }
+
+        /* 底部固定按鈕區 */
+        .bottom-fixed-frame {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background-color: var(--bottom-bg);
+            border-top: 1px solid #ddd;
+            padding: 15px 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+        }
+        .action-btn { font-size: 18px; font-weight: bold; padding: 10px 20px; border: none; border-radius: 8px; background-color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; }
+        .btn-save { background-color: var(--save-btn-bg); }
+        
+        @media (min-width: 600px) {
+            body { max-width: 500px; margin: 0 auto; border-left: 1px solid #ddd; border-right: 1px solid #ddd; }
+            .bottom-fixed-frame { max-width: 500px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="header-title">茶道計時助手</div>
+        <div class="header-actions">
+            <button class="header-btn" onclick="exportData()">📤 匯出</button>
+            <button class="header-btn" onclick="triggerImport()">📥 匯入</button>
+        </div>
+    </div>
+    <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
+
+    <div class="tabs-wrapper" id="tabs-wrapper"></div>
+
+    <div id="scrollable-frame">
+        <div id="rows-container"></div>
+        
+        <div class="ratio-container">
+            <div class="ratio-row">
+                <div class="ratio-item">
+                    水溫 
+                    <input type="number" id="tea-temp-min" class="ratio-input-small" placeholder="95"> 
+                    <span style="margin: 0 4px; color: #777;">~</span> 
+                    <input type="number" id="tea-temp-max" class="ratio-input-small" placeholder="100"> ℃
+                </div>
+                <div class="ratio-item">
+                    比例 1 : <input type="number" id="tea-ratio" class="ratio-input-large" placeholder="20" oninput="calculateTea()">
+                </div>
+            </div>
+            <div class="ratio-row">
+                <div class="ratio-item">
+                    壺容量 <input type="number" id="pot-capacity" class="ratio-input-large" placeholder="150" oninput="calculateTea()"> ml
+                </div>
+            </div>
+            <div class="calc-result-box">
+                💡 建議投茶量：<span id="calc-tea-result">--</span> g
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-fixed-frame">
+        <button class="action-btn" onclick="addRow()">新增泡數</button>
+        <button class="action-btn" onclick="resetAll()">重置</button>
+        <button class="action-btn btn-save" onclick="saveConfig()">儲存全部</button>
+    </div>
+
+    <script>
+        const scrollableFrame = document.getElementById('scrollable-frame');
+        const rowsContainer = document.getElementById('rows-container');
+        const tabsWrapper = document.getElementById('tabs-wrapper');
+        
+        const teaTempMinInput = document.getElementById('tea-temp-min');
+        const teaTempMaxInput = document.getElementById('tea-temp-max');
+        const teaRatioInput = document.getElementById('tea-ratio');
+        const potCapacityInput = document.getElementById('pot-capacity');
+        const teaResultDisplay = document.getElementById('calc-tea-result');
+        
+        let rowsData = [];
+        let allTeaConfigs = {};
+        let currentTea = "";
+
+        window.onload = function() {
+            loadConfig();
+            renderTabs();
+            loadTeaUi(currentTea);
+        };
+
+        // --- 匯出與匯入功能 ---
+        function exportData() {
+            // 匯出前先將目前畫面上的數字同步到變數中
+            saveCurrentUiToData();
+            
+            const dataStr = JSON.stringify(allTeaConfigs, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            
+            // 建立下載檔名 (加入當天日期)
+            const date = new Date();
+            const dateString = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+            const fileName = `TeaTimer_Backup_${dateString}.json`;
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function triggerImport() {
+            document.getElementById('import-file').click();
+        }
+
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    // 簡單防呆檢查，確保匯入的是物件格式
+                    if (typeof importedData === 'object' && importedData !== null && !Array.isArray(importedData)) {
+                        if (confirm("⚠️ 匯入將會「覆蓋」目前的所有的茶葉設定，確定要繼續嗎？")) {
+                            allTeaConfigs = importedData;
+                            currentTea = Object.keys(allTeaConfigs)[0] || "";
+                            saveToLocalStorage();
+                            renderTabs();
+                            if (currentTea) loadTeaUi(currentTea);
+                            alert("✅ 匯入成功！");
+                        }
+                    } else {
+                        alert("❌ 檔案格式不正確，請選擇由本系統匯出的 JSON 檔案。");
+                    }
+                } catch (err) {
+                    alert("❌ 讀取檔案失敗，這可能不是正確的備份檔。");
+                }
+                // 清空 input value，允許使用者重複選擇同一個檔案
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        // --- 自動換算茶葉克數 ---
+        function calculateTea() {
+            const ratio = parseFloat(teaRatioInput.value);
+            const capacity = parseFloat(potCapacityInput.value);
+            
+            if (ratio > 0 && capacity > 0) {
+                const result = (capacity / ratio).toFixed(1);
+                teaResultDisplay.innerText = result;
+            } else {
+                teaResultDisplay.innerText = "--";
+            }
+        }
+
+        // --- 分頁與茶種管理 ---
+        function renderTabs() {
+            tabsWrapper.innerHTML = '';
+            for (let teaName in allTeaConfigs) {
+                let tab = document.createElement('div');
+                tab.className = 'tab' + (teaName === currentTea ? ' active' : '');
+                let nameText = document.createElement('span');
+                nameText.innerText = teaName;
+                tab.appendChild(nameText);
+                
+                if (teaName === currentTea) {
+                    let editBtn = document.createElement('span');
+                    editBtn.className = 'tab-action';
+                    editBtn.innerHTML = '✏️';
+                    editBtn.onclick = (e) => { e.stopPropagation(); renameTea(teaName); };
+                    let delBtn = document.createElement('span');
+                    delBtn.className = 'tab-action';
+                    delBtn.innerHTML = '❌';
+                    delBtn.onclick = (e) => { e.stopPropagation(); deleteCurrentTea(teaName); };
+                    tab.appendChild(editBtn);
+                    tab.appendChild(delBtn);
+                }
+                tab.onclick = () => switchTab(teaName);
+                tabsWrapper.appendChild(tab);
+            }
+            let addTabBtn = document.createElement('div');
+            addTabBtn.className = 'tab-add';
+            addTabBtn.innerText = '＋ 新增';
+            addTabBtn.onclick = addNewTea;
+            tabsWrapper.appendChild(addTabBtn);
+        }
+
+        function renameTea(oldName) {
+            let newName = prompt(`請輸入「${oldName}」的新名稱：`, oldName);
+            if (newName && newName.trim() !== "" && newName !== oldName) {
+                if (allTeaConfigs[newName]) { alert("名稱重複囉！"); return; }
+                saveCurrentUiToData();
+                let newConfigs = {};
+                for (let key in allTeaConfigs) {
+                    if (key === oldName) newConfigs[newName] = allTeaConfigs[key];
+                    else newConfigs[key] = allTeaConfigs[key];
+                }
+                allTeaConfigs = newConfigs;
+                currentTea = newName;
+                saveToLocalStorage();
+                renderTabs();
+            }
+        }
+
+        function deleteCurrentTea(teaName) {
+            if (Object.keys(allTeaConfigs).length <= 1) { alert("至少要保留一種茶葉喔！"); return; }
+            if (confirm(`確定刪除「${teaName}」？`)) {
+                resetAll(); 
+                delete allTeaConfigs[teaName];
+                currentTea = Object.keys(allTeaConfigs)[0];
+                saveToLocalStorage();
+                renderTabs();
+                loadTeaUi(currentTea);
+            }
+        }
+
+        function switchTab(teaName) {
+            if (currentTea === teaName) return;
+            saveCurrentUiToData();
+            resetAll();
+            currentTea = teaName;
+            renderTabs();
+            loadTeaUi(currentTea);
+        }
+
+        function addNewTea() {
+            let newName = prompt("請輸入新茶葉名稱：");
+            if (newName && newName.trim() !== "") {
+                if (allTeaConfigs[newName]) { alert("名稱重複囉！"); return; }
+                saveCurrentUiToData();
+                allTeaConfigs[newName] = { steeps: ["30", "30", "30"], tempMin: "95", tempMax: "100", ratio: "20", pot: "150" };
+                currentTea = newName;
+                saveToLocalStorage();
+                renderTabs();
+                loadTeaUi(currentTea);
+                tabsWrapper.scrollLeft = tabsWrapper.scrollWidth;
+            }
+        }
+
+        function loadTeaUi(teaName) {
+            rowsContainer.innerHTML = ''; 
+            rowsData = [];
+            let config = allTeaConfigs[teaName] || {
