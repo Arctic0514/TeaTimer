@@ -12,6 +12,7 @@
             --bg-color: #faf8f5;
             --bottom-bg: #eeeeee;
             --save-btn-bg: #d4edda;
+            --accent-color: #8b4513; /* 皮革/茶褐色 */
         }
         body {
             font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
@@ -34,9 +35,7 @@
             scrollbar-width: none; 
             -ms-overflow-style: none;
         }
-        .tabs-wrapper::-webkit-scrollbar {
-            display: none;
-        }
+        .tabs-wrapper::-webkit-scrollbar { display: none; }
         .tab {
             display: flex;
             align-items: center;
@@ -44,33 +43,14 @@
             color: rgba(255, 255, 255, 0.7);
             cursor: pointer;
             white-space: nowrap;
-            font-size: 20px; /* 將字體放大到 20px */
+            font-size: 20px;
             font-weight: bold;
             border-bottom: 3px solid transparent;
             transition: 0.2s;
         }
-        .tab.active {
-            color: white;
-            border-bottom: 3px solid white;
-        }
-        .tab-action {
-            margin-left: 8px;
-            font-size: 18px; /* 配合 20px 字體，將圖示微調放大 */
-            opacity: 0.8;
-            padding: 2px;
-        }
-        .tab-action:active {
-            opacity: 1;
-            transform: scale(1.1);
-        }
-        .tab-add {
-            padding: 10px 15px;
-            color: #d4edda;
-            cursor: pointer;
-            white-space: nowrap;
-            font-size: 20px; /* 將新增按鈕也放大到 20px */
-            font-weight: bold;
-        }
+        .tab.active { color: white; border-bottom: 3px solid white; }
+        .tab-action { margin-left: 8px; font-size: 18px; opacity: 0.8; padding: 2px; }
+        .tab-add { padding: 10px 15px; color: #d4edda; cursor: pointer; white-space: nowrap; font-size: 20px; font-weight: bold; }
 
         /* 滾動清單區 */
         #scrollable-frame {
@@ -79,7 +59,6 @@
             padding: 20px 15px 100px 15px; 
         }
         
-        /* 每一列的樣式 */
         .row-frame {
             display: flex;
             align-items: center;
@@ -99,7 +78,6 @@
             background-color: #e0e0e0;
             font-weight: bold;
             cursor: pointer;
-            transition: 0.2s;
         }
         .start-btn.running { background-color: #ffebee; color: red; }
         .start-btn.done { background-color: #e8f5e9; color: green; }
@@ -117,46 +95,46 @@
             font-weight: bold;
         }
         .sec-text { font-size: 18px; font-weight: bold; margin-left: 8px; }
+        .delete-btn { color: #ff4444; background: none; border: 1px solid #ff4444; border-radius: 6px; padding: 4px 10px; margin-left: 10px; font-size: 14px; font-weight: bold; }
 
-        /* 刪除按鈕樣式 */
-        .delete-btn {
-            color: #ff4444;
-            background: none;
-            border: 1px solid #ff4444;
-            border-radius: 6px;
-            padding: 4px 10px;
-            margin-left: 10px;
-            font-size: 14px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .delete-btn:active { background-color: #ffebee; }
-
-        /* 茶水比例設定區 */
+        /* 茶水比例 & 計算區 */
         .ratio-container {
-            background: white;
+            background: #ffffff;
             margin: 20px 0 10px 0; 
-            padding: 15px;
+            padding: 20px;
             border-radius: 12px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 18px;
-            font-weight: bold;
-            color: #555;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            border-left: 6px solid var(--primary-color);
         }
-        .ratio-input {
-            width: 50px;
+        .ratio-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .ratio-item { display: flex; align-items: center; font-size: 18px; font-weight: bold; }
+        .ratio-input-large {
+            width: 70px;
             font-size: 18px;
             text-align: center;
             border: 1px solid #ccc;
             border-radius: 6px;
-            padding: 4px;
+            padding: 6px;
             margin: 0 5px;
             font-weight: bold;
-            color: var(--primary-dark);
+            color: var(--accent-color);
         }
+        .calc-result-box {
+            background-color: #fcf8e3;
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--accent-color);
+            border: 1px dashed var(--accent-color);
+        }
+        #calc-tea-result { font-size: 24px; color: #d9534f; margin: 0 5px; }
 
         /* 底部固定按鈕區 */
         .bottom-fixed-frame {
@@ -171,16 +149,7 @@
             gap: 15px;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
         }
-        .action-btn {
-            font-size: 18px;
-            font-weight: bold;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            background-color: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            cursor: pointer;
-        }
+        .action-btn { font-size: 18px; font-weight: bold; padding: 10px 20px; border: none; border-radius: 8px; background-color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; }
         .btn-save { background-color: var(--save-btn-bg); }
         
         @media (min-width: 600px) {
@@ -191,18 +160,28 @@
 </head>
 <body>
 
-    <!-- 分頁標籤列 -->
     <div class="tabs-wrapper" id="tabs-wrapper"></div>
 
     <div id="scrollable-frame">
-        <!-- 倒數列容器 -->
         <div id="rows-container"></div>
         
-        <!-- 茶水比例區塊 -->
         <div class="ratio-container">
-            <label>水量 <input type="number" id="water-volume" class="ratio-input" placeholder="-"> ml</label>
-            <span style="margin: 0 12px; color: #ccc;">|</span>
-            <label>茶葉 <input type="number" id="tea-weight" class="ratio-input" placeholder="-"> g</label>
+            <div class="ratio-row">
+                <div class="ratio-item">
+                    水溫 <input type="text" id="tea-temp" class="ratio-input-large" placeholder="100"> ℃
+                </div>
+                <div class="ratio-item">
+                    比例 1 : <input type="number" id="tea-ratio" class="ratio-input-large" placeholder="20" oninput="calculateTea()">
+                </div>
+            </div>
+            <div class="ratio-row">
+                <div class="ratio-item">
+                    壺容量 <input type="number" id="pot-capacity" class="ratio-input-large" placeholder="150" oninput="calculateTea()"> ml
+                </div>
+            </div>
+            <div class="calc-result-box">
+                💡 建議投茶量：<span id="calc-tea-result">--</span> g
+            </div>
         </div>
     </div>
 
@@ -216,27 +195,42 @@
         const scrollableFrame = document.getElementById('scrollable-frame');
         const rowsContainer = document.getElementById('rows-container');
         const tabsWrapper = document.getElementById('tabs-wrapper');
-        const teaWeightInput = document.getElementById('tea-weight');
-        const waterVolumeInput = document.getElementById('water-volume');
+        
+        // 取得新的輸入欄位
+        const teaTempInput = document.getElementById('tea-temp');
+        const teaRatioInput = document.getElementById('tea-ratio');
+        const potCapacityInput = document.getElementById('pot-capacity');
+        const teaResultDisplay = document.getElementById('calc-tea-result');
         
         let rowsData = [];
         let allTeaConfigs = {};
         let currentTea = "";
 
-        // 初始化
         window.onload = function() {
             loadConfig();
             renderTabs();
             loadTeaUi(currentTea);
         };
 
-        // --- 分頁系統與茶種管理邏輯 ---
+        // 自動換算茶葉克數
+        function calculateTea() {
+            const ratio = parseFloat(teaRatioInput.value);
+            const capacity = parseFloat(potCapacityInput.value);
+            
+            if (ratio > 0 && capacity > 0) {
+                const result = (capacity / ratio).toFixed(1);
+                teaResultDisplay.innerText = result;
+            } else {
+                teaResultDisplay.innerText = "--";
+            }
+        }
+
+        // --- 分頁與茶種管理 ---
         function renderTabs() {
             tabsWrapper.innerHTML = '';
             for (let teaName in allTeaConfigs) {
                 let tab = document.createElement('div');
                 tab.className = 'tab' + (teaName === currentTea ? ' active' : '');
-                
                 let nameText = document.createElement('span');
                 nameText.innerText = teaName;
                 tab.appendChild(nameText);
@@ -246,23 +240,19 @@
                     editBtn.className = 'tab-action';
                     editBtn.innerHTML = '✏️';
                     editBtn.onclick = (e) => { e.stopPropagation(); renameTea(teaName); };
-                    
                     let delBtn = document.createElement('span');
                     delBtn.className = 'tab-action';
                     delBtn.innerHTML = '❌';
                     delBtn.onclick = (e) => { e.stopPropagation(); deleteCurrentTea(teaName); };
-
                     tab.appendChild(editBtn);
                     tab.appendChild(delBtn);
                 }
-
                 tab.onclick = () => switchTab(teaName);
                 tabsWrapper.appendChild(tab);
             }
-
             let addTabBtn = document.createElement('div');
             addTabBtn.className = 'tab-add';
-            addTabBtn.innerText = '＋ 新增茶種';
+            addTabBtn.innerText = '＋ 新增';
             addTabBtn.onclick = addNewTea;
             tabsWrapper.appendChild(addTabBtn);
         }
@@ -270,12 +260,8 @@
         function renameTea(oldName) {
             let newName = prompt(`請輸入「${oldName}」的新名稱：`, oldName);
             if (newName && newName.trim() !== "" && newName !== oldName) {
-                if (allTeaConfigs[newName]) {
-                    alert("這個茶葉名稱已經存在囉！");
-                    return;
-                }
+                if (allTeaConfigs[newName]) { alert("名稱重複囉！"); return; }
                 saveCurrentUiToData();
-                
                 let newConfigs = {};
                 for (let key in allTeaConfigs) {
                     if (key === oldName) newConfigs[newName] = allTeaConfigs[key];
@@ -283,18 +269,14 @@
                 }
                 allTeaConfigs = newConfigs;
                 currentTea = newName;
-                
                 saveToLocalStorage();
                 renderTabs();
             }
         }
 
         function deleteCurrentTea(teaName) {
-            if (Object.keys(allTeaConfigs).length <= 1) {
-                alert("至少需要保留一種茶葉喔！");
-                return;
-            }
-            if (confirm(`確定要刪除「${teaName}」的所有設定嗎？此動作無法復原。`)) {
+            if (Object.keys(allTeaConfigs).length <= 1) { alert("至少要保留一種茶葉喔！"); return; }
+            if (confirm(`確定刪除「${teaName}」？`)) {
                 resetAll(); 
                 delete allTeaConfigs[teaName];
                 currentTea = Object.keys(allTeaConfigs)[0];
@@ -314,14 +296,11 @@
         }
 
         function addNewTea() {
-            let newName = prompt("請輸入新茶葉名稱（例如：鐵觀音）：");
+            let newName = prompt("請輸入新茶葉名稱：");
             if (newName && newName.trim() !== "") {
-                if (allTeaConfigs[newName]) {
-                    alert("這個茶葉名稱已經存在囉！");
-                    return;
-                }
+                if (allTeaConfigs[newName]) { alert("名稱重複囉！"); return; }
                 saveCurrentUiToData();
-                allTeaConfigs[newName] = { steeps: ["30", "30", "30"], teaWeight: "", waterVolume: "" };
+                allTeaConfigs[newName] = { steeps: ["30", "30", "30"], temp: "100", ratio: "20", pot: "150" };
                 currentTea = newName;
                 saveToLocalStorage();
                 renderTabs();
@@ -333,29 +312,25 @@
         function loadTeaUi(teaName) {
             rowsContainer.innerHTML = ''; 
             rowsData = [];
+            let config = allTeaConfigs[teaName] || { steeps: ["30"], temp: "", ratio: "", pot: "" };
             
-            // 讀取該茶葉的設定
-            let config = allTeaConfigs[teaName] || { steeps: ["30", "30", "30"], teaWeight: "", waterVolume: "" };
-            let secs = config.steeps;
-            if (!secs || secs.length === 0) secs = ["30"];
+            // 讀取新欄位值
+            teaTempInput.value = config.temp || "";
+            teaRatioInput.value = config.ratio || "";
+            potCapacityInput.value = config.pot || "";
             
-            // 更新茶水比例 UI
-            teaWeightInput.value = config.teaWeight || "";
-            waterVolumeInput.value = config.waterVolume || "";
-            
-            secs.forEach(sec => addRow(sec));
+            config.steeps.forEach(sec => addRow(sec));
+            calculateTea(); // 載入後立刻算一次
         }
 
-        // --- UI 操作與計時邏輯 ---
+        // --- 計時邏輯 ---
         function getChineseNum(n) {
-            const nums = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十", 
-                          "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十"];
+            const nums = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十"];
             return n < nums.length ? nums[n] : n.toString();
         }
 
         function getRowName(index) {
-            if (index === 0) return "醒茶";
-            return `第${getChineseNum(index)}泡`;
+            return index === 0 ? "醒茶" : `第${getChineseNum(index)}泡`;
         }
 
         function addRow(defaultSec = "30") {
@@ -399,30 +374,19 @@
             rowFrame.appendChild(startBtn);
             rowFrame.appendChild(label);
             rowFrame.appendChild(inputContainer);
-            
             rowsContainer.appendChild(rowFrame);
 
-            const rowObj = {
-                id: uniqueId, name: labelText, btn: startBtn, 
-                label: label, input: secInput, timerId: null, isRunning: false
-            };
-            
+            const rowObj = { id: uniqueId, name: labelText, btn: startBtn, label: label, input: secInput, timerId: null, isRunning: false };
             startBtn.onclick = () => startCountdown(rowObj);
             deleteBtn.onclick = () => deleteRow(uniqueId);
-            
             rowsData.push(rowObj);
-            
-            setTimeout(() => {
-                scrollableFrame.scrollTop = scrollableFrame.scrollHeight;
-            }, 50);
         }
 
         function deleteRow(id) {
             const index = rowsData.findIndex(r => r.id === id);
             if (index !== -1) {
                 if (rowsData[index].timerId) clearInterval(rowsData[index].timerId);
-                const element = document.getElementById(`row-${id}`);
-                if (element) element.remove();
+                document.getElementById(`row-${id}`).remove();
                 rowsData.splice(index, 1);
                 updateAllLabels();
             }
@@ -438,13 +402,9 @@
 
         function startCountdown(row) {
             if (row.isRunning) return;
-
-            let unlockUtterance = new SpeechSynthesisUtterance("");
-            window.speechSynthesis.speak(unlockUtterance);
-
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
             row.isRunning = true;
             let seconds = parseInt(row.input.value) || 0;
-            
             row.label.classList.remove('done');
             row.btn.className = 'start-btn running';
             row.btn.disabled = true;
@@ -468,7 +428,6 @@
             if ('speechSynthesis' in window) {
                 let utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = 'zh-TW';
-                utterance.rate = 1.0;
                 window.speechSynthesis.speak(utterance);
             }
         }
@@ -489,8 +448,9 @@
             if (currentTea) {
                 allTeaConfigs[currentTea] = {
                     steeps: rowsData.map(row => row.input.value),
-                    teaWeight: teaWeightInput.value,
-                    waterVolume: waterVolumeInput.value
+                    temp: teaTempInput.value,
+                    ratio: teaRatioInput.value,
+                    pot: potCapacityInput.value
                 };
             }
         }
@@ -502,15 +462,11 @@
         function saveConfig() {
             saveCurrentUiToData();
             saveToLocalStorage();
-            
             const saveBtn = document.querySelector('.btn-save');
             const originalText = saveBtn.innerText;
             saveBtn.innerText = '已儲存！';
             saveBtn.style.backgroundColor = '#c3e6cb';
-            setTimeout(() => {
-                saveBtn.innerText = originalText;
-                saveBtn.style.backgroundColor = 'var(--save-btn-bg)';
-            }, 1000);
+            setTimeout(() => { saveBtn.innerText = originalText; saveBtn.style.backgroundColor = 'var(--save-btn-bg)'; }, 1000);
         }
 
         function loadConfig() {
@@ -518,26 +474,19 @@
             if (saved) {
                 try { 
                     let parsed = JSON.parse(saved); 
+                    // 格式向下相容轉移
                     for (let key in parsed) {
                         if (Array.isArray(parsed[key])) {
-                            parsed[key] = { steeps: parsed[key], teaWeight: "", waterVolume: "" };
+                            parsed[key] = { steeps: parsed[key], temp: "", ratio: "", pot: "" };
+                        } else if (!parsed[key].temp) {
+                            parsed[key].temp = ""; parsed[key].ratio = ""; parsed[key].pot = "";
                         }
                     }
                     allTeaConfigs = parsed;
-                    
-                    if(Object.keys(allTeaConfigs).length > 0) {
-                        currentTea = Object.keys(allTeaConfigs)[0];
-                        return;
-                    }
-                } 
-                catch(e) {}
+                    if(Object.keys(allTeaConfigs).length > 0) { currentTea = Object.keys(allTeaConfigs)[0]; return; }
+                } catch(e) {}
             }
-
-            allTeaConfigs = {
-                "高山茶": { steeps: ["30", "40", "50"], teaWeight: "8", waterVolume: "150" },
-                "紅茶": { steeps: ["15", "20", "30"], teaWeight: "5", waterVolume: "150" },
-                "普洱茶": { steeps: ["10", "15", "20"], teaWeight: "7", waterVolume: "110" }
-            };
+            allTeaConfigs = { "高山茶": { steeps: ["30", "40", "50"], temp: "95", ratio: "20", pot: "150" } };
             currentTea = "高山茶";
         }
     </script>
