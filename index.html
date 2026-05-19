@@ -2,22 +2,20 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="manifest" href="manifest.json">
     <title>茶道計時助手</title>
     <style>
         :root {
-            --primary-color: #6b8e23;
+            --primary-color: #6b8e23; /* 抹茶綠 */
             --primary-dark: #55711b;
             --bg-color: #faf8f5;
             --bottom-bg: #eeeeee;
             --save-btn-bg: #d4edda;
-            --accent-color: #8b4513;
+            --accent-color: #8b4513; /* 皮革/茶褐色 */
         }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Microsoft JhengHei", "PingFang TC", sans-serif;
+            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
             margin: 0;
             padding: 0;
             background-color: var(--bg-color);
@@ -25,32 +23,38 @@
             display: flex;
             flex-direction: column;
             height: 100vh;
-            -webkit-tap-highlight-color: transparent; /* 移除 iOS 點擊閃爍 */
         }
         
-        /* 頂部標題列 */
+        /* 頂部標題列 (包含匯出/匯入) */
         .header {
             background-color: var(--primary-color);
             color: white;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 15px 12px 15px; /* iOS 狀態列預留點空間 */
+            padding: 12px 15px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        .header-title { font-size: 22px; font-weight: bold; }
-        .header-actions { display: flex; gap: 10px; }
+        .header-title {
+            font-size: 22px;
+            font-weight: bold;
+        }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
         .header-btn {
             background: rgba(255,255,255,0.2);
             border: none;
             color: white;
             font-size: 14px;
-            padding: 6px 10px;
-            border-radius: 6px;
+            padding: 5px 8px;
+            border-radius: 4px;
             cursor: pointer;
             font-weight: bold;
-            -webkit-appearance: none; /* 移除 iOS 原生按鈕樣式 */
+            transition: 0.2s;
         }
+        .header-btn:active { background: rgba(255,255,255,0.4); }
 
         /* 分頁標籤列 */
         .tabs-wrapper {
@@ -62,7 +66,6 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
             scrollbar-width: none; 
             -ms-overflow-style: none;
-            -webkit-overflow-scrolling: touch; /* iOS 滑動順暢 */
         }
         .tabs-wrapper::-webkit-scrollbar { display: none; }
         .tab {
@@ -75,6 +78,7 @@
             font-size: 20px;
             font-weight: bold;
             border-bottom: 3px solid transparent;
+            transition: 0.2s;
         }
         .tab.active { color: white; border-bottom: 3px solid white; }
         .tab-action { margin-left: 8px; font-size: 18px; opacity: 0.8; padding: 2px; }
@@ -85,7 +89,6 @@
             flex: 1;
             overflow-y: auto;
             padding: 20px 15px 100px 15px; 
-            -webkit-overflow-scrolling: touch;
         }
         
         .row-frame {
@@ -107,7 +110,6 @@
             background-color: #e0e0e0;
             font-weight: bold;
             cursor: pointer;
-            -webkit-appearance: none;
         }
         .start-btn.running { background-color: #ffebee; color: red; }
         .start-btn.done { background-color: #e8f5e9; color: green; }
@@ -115,30 +117,22 @@
         .row-label { font-size: 20px; font-weight: bold; flex: 1; margin-left: 15px; }
         .row-label.done { color: #B8860B; }
         
-        /* 統一強制覆蓋 iOS 的 Input 樣式 */
-        input[type="number"], input[type="text"] {
-            -webkit-appearance: none;
-            -moz-appearance: textfield;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            background-color: white;
-            font-family: inherit;
-        }
-        
         .sec-input {
             font-size: 22px;
             width: 50px;
             text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 6px;
             padding: 5px;
             font-weight: bold;
         }
         .sec-text { font-size: 18px; font-weight: bold; margin-left: 8px; }
-        .delete-btn { color: #ff4444; background: none; border: 1px solid #ff4444; border-radius: 6px; padding: 4px 10px; margin-left: 10px; font-size: 14px; font-weight: bold; -webkit-appearance: none; }
+        .delete-btn { color: #ff4444; background: none; border: 1px solid #ff4444; border-radius: 6px; padding: 4px 10px; margin-left: 10px; font-size: 14px; font-weight: bold; }
 
         /* 茶水比例 & 計算區 */
         .ratio-container {
             background: #ffffff;
-            margin: 20px 0 10px 0; 
+            margin: 20px 0 15px 0; 
             padding: 20px;
             border-radius: 12px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.08);
@@ -158,6 +152,8 @@
             width: 70px;
             font-size: 18px;
             text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 6px;
             padding: 6px;
             margin: 0 5px;
             font-weight: bold;
@@ -167,6 +163,8 @@
             width: 48px;
             font-size: 18px;
             text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 6px;
             padding: 6px;
             margin: 0 2px;
             font-weight: bold;
@@ -185,6 +183,40 @@
         }
         #calc-tea-result { font-size: 24px; color: #d9534f; margin: 0 5px; }
 
+        /* 茶種說明區 */
+        .info-container {
+            background: #ffffff;
+            margin: 0 0 10px 0;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            border-left: 6px solid var(--primary-dark);
+        }
+        .info-group {
+            margin-bottom: 15px;
+        }
+        .info-group:last-child {
+            margin-bottom: 0;
+        }
+        .info-label {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        .info-input, .info-textarea {
+            width: 100%;
+            box-sizing: border-box;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            padding: 10px;
+            font-family: inherit;
+        }
+        .info-textarea {
+            resize: vertical;
+        }
+
         /* 底部固定按鈕區 */
         .bottom-fixed-frame {
             position: fixed;
@@ -192,18 +224,18 @@
             width: 100%;
             background-color: var(--bottom-bg);
             border-top: 1px solid #ddd;
-            padding: 15px 0 25px 0; /* iOS 底部 Home 條預留空間 */
+            padding: 15px 0;
             display: flex;
             justify-content: center;
             gap: 15px;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
         }
-        .action-btn { font-size: 18px; font-weight: bold; padding: 10px 20px; border: none; border-radius: 8px; background-color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; -webkit-appearance: none; }
+        .action-btn { font-size: 18px; font-weight: bold; padding: 10px 20px; border: none; border-radius: 8px; background-color: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: pointer; }
         .btn-save { background-color: var(--save-btn-bg); }
         
         @media (min-width: 600px) {
             body { max-width: 500px; margin: 0 auto; border-left: 1px solid #ddd; border-right: 1px solid #ddd; }
-            .bottom-fixed-frame { max-width: 500px; padding-bottom: 15px; }
+            .bottom-fixed-frame { max-width: 500px; }
         }
     </style>
 </head>
@@ -244,6 +276,17 @@
                 💡 建議投茶量：<span id="calc-tea-result">--</span> g
             </div>
         </div>
+
+        <div class="info-container">
+            <div class="info-group">
+                <div class="info-label">🏆 代表茶種</div>
+                <input type="text" id="rep-tea-input" class="info-input" placeholder="例如：台茶16號...">
+            </div>
+            <div class="info-group">
+                <div class="info-label">💡 沖泡核心要領</div>
+                <textarea id="brewing-tips-input" class="info-textarea" rows="3" placeholder="請輸入此茶種的沖泡注意事項..."></textarea>
+            </div>
+        </div>
     </div>
 
     <div class="bottom-fixed-frame">
@@ -263,6 +306,10 @@
         const potCapacityInput = document.getElementById('pot-capacity');
         const teaResultDisplay = document.getElementById('calc-tea-result');
         
+        // 新增 DOM 元素
+        const repTeaInput = document.getElementById('rep-tea-input');
+        const brewingTipsInput = document.getElementById('brewing-tips-input');
+        
         let rowsData = [];
         let allTeaConfigs = {};
         let currentTea = "";
@@ -273,32 +320,25 @@
             loadTeaUi(currentTea);
         };
 
+        // --- 匯出與匯入功能 ---
         function exportData() {
-            try {
-                saveCurrentUiToData();
-                const dataStr = JSON.stringify(allTeaConfigs, null, 2);
-                const blob = new Blob([dataStr], { type: "application/json" });
-                
-                // iOS 檔案下載相容性處理
-                const url = window.URL.createObjectURL(blob);
-                const date = new Date();
-                const dateString = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
-                const fileName = `TeaTimer_Backup_${dateString}.json`;
+            saveCurrentUiToData();
+            
+            const dataStr = JSON.stringify(allTeaConfigs, null, 2);
+            const blob = new Blob([dataStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+            
+            const date = new Date();
+            const dateString = `${date.getFullYear()}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`;
+            const fileName = `TeaTimer_Backup_${dateString}.json`;
 
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = fileName;
-                document.body.appendChild(a);
-                a.click();
-                
-                setTimeout(() => {
-                    document.body.removeChild(a);
-                    window.URL.revokeObjectURL(url);
-                }, 100);
-            } catch (err) {
-                alert("匯出發生錯誤：" + err.message);
-            }
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
         }
 
         function triggerImport() {
@@ -333,6 +373,7 @@
             reader.readAsText(file);
         }
 
+        // --- 自動換算茶葉克數 ---
         function calculateTea() {
             const ratio = parseFloat(teaRatioInput.value);
             const capacity = parseFloat(potCapacityInput.value);
@@ -345,6 +386,7 @@
             }
         }
 
+        // --- 分頁與茶種管理 ---
         function renderTabs() {
             tabsWrapper.innerHTML = '';
             for (let teaName in allTeaConfigs) {
@@ -419,7 +461,15 @@
             if (newName && newName.trim() !== "") {
                 if (allTeaConfigs[newName]) { alert("名稱重複囉！"); return; }
                 saveCurrentUiToData();
-                allTeaConfigs[newName] = { steeps: ["30", "30", "30"], tempMin: "95", tempMax: "100", ratio: "20", pot: "150" };
+                allTeaConfigs[newName] = { 
+                    steeps: ["30", "30", "30"], 
+                    tempMin: "95", 
+                    tempMax: "100", 
+                    ratio: "20", 
+                    pot: "150",
+                    repTea: "",
+                    tips: ""
+                };
                 currentTea = newName;
                 saveToLocalStorage();
                 renderTabs();
@@ -431,17 +481,22 @@
         function loadTeaUi(teaName) {
             rowsContainer.innerHTML = ''; 
             rowsData = [];
-            let config = allTeaConfigs[teaName] || { steeps: ["30"], tempMin: "", tempMax: "", ratio: "", pot: "" };
+            let config = allTeaConfigs[teaName] || { steeps: ["30"], tempMin: "", tempMax: "", ratio: "", pot: "", repTea: "", tips: "" };
             
             teaTempMinInput.value = config.tempMin || "";
             teaTempMaxInput.value = config.tempMax || "";
             teaRatioInput.value = config.ratio || "";
             potCapacityInput.value = config.pot || "";
             
+            // 讀取新增欄位的資料
+            repTeaInput.value = config.repTea || "";
+            brewingTipsInput.value = config.tips || "";
+            
             config.steeps.forEach(sec => addRow(sec));
             calculateTea(); 
         }
 
+        // --- 計時邏輯 ---
         function getChineseNum(n) {
             const nums = ["零", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八", "十九", "二十"];
             return n < nums.length ? nums[n] : n.toString();
@@ -452,8 +507,7 @@
         }
 
         function addRow(defaultSec = "30") {
-            // iOS 安全修正：使用整數作為 ID，避免浮點數在某些 DOM 查詢中出錯
-            const uniqueId = Math.floor(Date.now() + Math.random() * 10000);
+            const uniqueId = Date.now() + Math.random();
             const idx = rowsData.length;
             const labelText = getRowName(idx);
 
@@ -505,8 +559,7 @@
             const index = rowsData.findIndex(r => r.id === id);
             if (index !== -1) {
                 if (rowsData[index].timerId) clearInterval(rowsData[index].timerId);
-                const element = document.getElementById(`row-${id}`);
-                if (element) element.remove();
+                document.getElementById(`row-${id}`).remove();
                 rowsData.splice(index, 1);
                 updateAllLabels();
             }
@@ -522,13 +575,7 @@
 
         function startCountdown(row) {
             if (row.isRunning) return;
-            
-            // iOS 語音解鎖修正：確保每一次點擊啟動時都重置發音引擎
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); // 先清除未完成的語音序列
-                window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
-            }
-
+            window.speechSynthesis.speak(new SpeechSynthesisUtterance(""));
             row.isRunning = true;
             let seconds = parseInt(row.input.value) || 0;
             row.label.classList.remove('done');
@@ -569,6 +616,7 @@
             });
         }
 
+        // --- 儲存系統 ---
         function saveCurrentUiToData() {
             if (currentTea) {
                 allTeaConfigs[currentTea] = {
@@ -576,7 +624,10 @@
                     tempMin: teaTempMinInput.value,
                     tempMax: teaTempMaxInput.value,
                     ratio: teaRatioInput.value,
-                    pot: potCapacityInput.value
+                    pot: potCapacityInput.value,
+                    // 將新增的資料一併寫入
+                    repTea: repTeaInput.value,
+                    tips: brewingTipsInput.value
                 };
             }
         }
@@ -602,7 +653,7 @@
                     let parsed = JSON.parse(saved); 
                     for (let key in parsed) {
                         if (Array.isArray(parsed[key])) {
-                            parsed[key] = { steeps: parsed[key], tempMin: "", tempMax: "", ratio: "", pot: "" };
+                            parsed[key] = { steeps: parsed[key], tempMin: "", tempMax: "", ratio: "", pot: "", repTea: "", tips: "" };
                         } else {
                             if (parsed[key].temp !== undefined) {
                                 if (parsed[key].temp.includes('~')) {
@@ -619,13 +670,15 @@
                             if (parsed[key].tempMax === undefined) parsed[key].tempMax = "";
                             if (parsed[key].ratio === undefined) parsed[key].ratio = "";
                             if (parsed[key].pot === undefined) parsed[key].pot = "";
+                            if (parsed[key].repTea === undefined) parsed[key].repTea = "";
+                            if (parsed[key].tips === undefined) parsed[key].tips = "";
                         }
                     }
                     allTeaConfigs = parsed;
                     if(Object.keys(allTeaConfigs).length > 0) { currentTea = Object.keys(allTeaConfigs)[0]; return; }
                 } catch(e) {}
             }
-            allTeaConfigs = { "高山茶": { steeps: ["30", "40", "50"], tempMin: "95", tempMax: "100", ratio: "20", pot: "150" } };
+            allTeaConfigs = { "高山茶": { steeps: ["30", "40", "50"], tempMin: "95", tempMax: "100", ratio: "20", pot: "150", repTea: "", tips: "" } };
             currentTea = "高山茶";
         }
     </script>
